@@ -47,16 +47,32 @@ document.getElementById('processBtn').addEventListener('click', async () => {
 
 // 2. Парсинг треков и весов
 function extractEntries(text) {
-    const wRe = /(\d+(?:[\.,]\d+)?)\s?kg/gi;
-    const tRe = /\b[A-Z]{2}\s?\d{3}\s?\d{3}\s?\d{3}\s?[A-Z]{2}\b/g;
-    const weights = [...text.matchAll(wRe)].map(m => parseFloat(m[1].replace(',', '.')));
-    const tracks  = [...text.matchAll(tRe)].map(m => m[0].replace(/\s+/g, ''));
-    const cnt = Math.min(weights.length, tracks.length);
-    const res = [];
-    for (let i = 0; i < cnt; i++) {
-        res.push({ track: tracks[i], weight: weights[i] });
-    }
-    return res;
+  const weightRe   = /(\d+(?:[\.,]\d+)?)\s?kg/gi;
+  const trackRe    = /\b[A-Z]{2}\s?\d{3}\s?\d{3}\s?\d{3}\s?[A-Z]{2}\b/g;
+
+  // Збираємо всі знайдені ваги
+  let rawWeights = [...text.matchAll(weightRe)].map(m =>
+    parseFloat(m[1].replace(',', '.'))
+  );
+  // Якщо ваг більше треків — беремо тільки кожну другу
+  // (можна також перевіряти: rawWeights.length >= tracks.length*2)
+  const weights = rawWeights.filter((_, i) => i % 2 === 0);
+
+  // Трек-номери, без пробілів
+  const tracks = [...text.matchAll(trackRe)].map(m =>
+    m[0].replace(/\s+/g, '')
+  );
+
+  // Нарізаємо під фактичну кількість треків
+  const count = Math.min(tracks.length, weights.length);
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    result.push({
+      track: tracks[i],
+      weight: weights[i]
+    });
+  }
+  return result;
 }
 
 // 3. Рендер карточки клиента
